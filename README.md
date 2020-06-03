@@ -4,6 +4,7 @@ Installation
 
 ```
 git clone git@github.com:upb-lea/gym-electric-motor.git 
+#(or use download github page)
 cd gym-electric-motor
 pip install -e .
 ```
