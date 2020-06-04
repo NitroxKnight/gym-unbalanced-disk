@@ -7,13 +7,16 @@ from os import path
 
 class UnbalancedDisk(gym.Env):
     def __init__(self):
+        ############# start do not edit  ################
         self.g = 9.80155078791343
         self.J = 0.000244210523960356
         self.Km = 10.5081817407479
         self.I = 0.0410772235841364
         self.M = 0.0761844495320390
         self.tau = 0.397973147009910
-        self.dt = 0.025
+        ############# end do not edit ###################
+
+        self.dt = 0.02 #time step
 
         # self.action_space = spaces.Box(low=[-3],high=[3],shape=(1,))
         self.action_space = spaces.Discrete(5)
@@ -21,30 +24,36 @@ class UnbalancedDisk(gym.Env):
         high = [1,1,float('inf')]
         self.observation_space = spaces.Box(low=np.array(low,dtype=np.float32),high=np.array(high,dtype=np.float32),shape=(3,))
 
-        self.reward_fun = lambda self: np.exp(-((self.th%(2*np.pi))-np.pi)**2/(2*(np.pi/10)**2))
+        self.reward_fun = lambda self: np.exp(-((self.th%(2*np.pi))-np.pi)**2/(2*(np.pi/10)**2)) #example reward function, change this!
         self.viewer = None
         self.u = 0
 
     def step(self,action):
         #convert to u
         # self.u = [-3.5,-1,0,1,3.5][action]
-        self.u = [-4,-1,0,1,4][action] #[-3,-1,0,1,3][action]
+        self.u = [-3,-1,0,1,3][action] #[-3,-1,0,1,3][action]
+
+
+        ##### Start Do not edit ######
+        self.u = np.clip(self.u,-3,3)
         f = lambda t,y: [y[1],-self.M*self.g*self.I/self.J*np.sin(y[0]) + self.u*self.Km/self.tau - 1/self.tau*y[1]]
         sol = solve_ivp(f,[0,self.dt],[self.th,self.omega])
         self.th, self.omega = sol.y[:,-1]
+        ##### End do not edit   #####
+
         reward = self.reward_fun(self)
 
         return self.get_obs(), reward, False, {}
         
 
     def reset(self,seed=None):
-        self.th = np.random.normal(loc=0,scale=0.01)
+        self.th = np.random.normal(loc=0,scale=0.001)
         self.omega = np.random.normal(loc=0,scale=0.001)
         return self.get_obs()
 
     def get_obs(self):
-        th_noise = self.th + np.random.normal(loc=0,scale=0.001)
-        omega_noise = self.omega + np.random.normal(loc=0,scale=0.001)
+        th_noise = self.th + np.random.normal(loc=0,scale=0.001) #do not edit
+        omega_noise = self.omega + np.random.normal(loc=0,scale=0.001) #do not edit
         return np.array([np.sin(th_noise), np.sin(omega_noise), omega_noise])
 
     def render(self, mode='human'):
