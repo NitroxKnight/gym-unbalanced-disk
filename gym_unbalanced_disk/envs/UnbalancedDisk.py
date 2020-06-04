@@ -7,12 +7,12 @@ from os import path
 
 class UnbalancedDisk(gym.Env):
     def __init__(self):
-        self.g = 9.8016
-        self.J = 2.4421e-4
-        self.Km = 10.5082
-        self.I = 0.0411
-        self.M = 0.0762
-        self.tau = 0.3980
+        self.g = 9.80155078791343
+        self.J = 0.000244210523960356
+        self.Km = 10.5081817407479
+        self.I = 0.0410772235841364
+        self.M = 0.0761844495320390
+        self.tau = 0.397973147009910
         self.dt = 0.025
 
         # self.action_space = spaces.Box(low=[-3],high=[3],shape=(1,))
@@ -28,7 +28,7 @@ class UnbalancedDisk(gym.Env):
     def step(self,action):
         #convert to u
         # self.u = [-3.5,-1,0,1,3.5][action]
-        self.u = [-3.5,-1,0,1,3.5][action] #[-3,-1,0,1,3][action]
+        self.u = [-4,-1,0,1,4][action] #[-3,-1,0,1,3][action]
         f = lambda t,y: [y[1],-self.M*self.g*self.I/self.J*np.sin(y[0]) + self.u*self.Km/self.tau - 1/self.tau*y[1]]
         sol = solve_ivp(f,[0,self.dt],[self.th,self.omega])
         self.th, self.omega = sol.y[:,-1]
