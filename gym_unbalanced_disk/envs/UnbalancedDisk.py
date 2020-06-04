@@ -6,6 +6,16 @@ from scipy.integrate import solve_ivp
 from os import path
 
 class UnbalancedDisk(gym.Env):
+    '''
+    UnbalancedDisk
+    th =            
+                    0
+                    |
+           np.pi/2-----np.pi*3/2
+                    |
+                  np.pi = starting location
+
+    '''
     def __init__(self):
         ############# start do not edit  ################
         self.g = 9.80155078791343
@@ -16,28 +26,32 @@ class UnbalancedDisk(gym.Env):
         self.tau = 0.397973147009910
         ############# end do not edit ###################
 
-        self.dt = 0.02 #time step
+        self.dt = 0.025 #time step
+ 
 
-        # self.action_space = spaces.Box(low=[-3],high=[3],shape=(1,))
-        self.action_space = spaces.Discrete(5)
-        low = [-1,-1,-float('inf')]
+        # change anything here (compilable with the exercise instructions)
+        self.action_space = spaces.Box(low=np.array([-3]),high=np.array([3]),shape=(1,)) #continues
+        # self.action_space = spaces.Discrete(2) #discrete
+        low = [-1,-1,-float('inf')] 
         high = [1,1,float('inf')]
         self.observation_space = spaces.Box(low=np.array(low,dtype=np.float32),high=np.array(high,dtype=np.float32),shape=(3,))
 
-        self.reward_fun = lambda self: np.exp(-((self.th%(2*np.pi))-np.pi)**2/(2*(np.pi/10)**2)) #example reward function, change this!
+        self.reward_fun = lambda self: np.exp(-((self.th+np.pi)%(2*np.pi)-np.pi)**2/(2*(np.pi/7)**2)) #example reward function, change this!
+        
         self.viewer = None
-        self.u = 0
+        self.u = 0 #for visual
+        self.reset()
 
     def step(self,action):
-        #convert to u
-        # self.u = [-3.5,-1,0,1,3.5][action]
-        self.u = [-3,-1,0,1,3][action] #[-3,-1,0,1,3][action]
-
+        #convert action to u
+        self.u = action[0] #continues
+        # self.u = [-3,-1,0,1,3][action] #discrate
+        # self.u = [-3,3][action] #discrate
 
         ##### Start Do not edit ######
         self.u = np.clip(self.u,-3,3)
-        f = lambda t,y: [y[1],-self.M*self.g*self.I/self.J*np.sin(y[0]) + self.u*self.Km/self.tau - 1/self.tau*y[1]]
-        sol = solve_ivp(f,[0,self.dt],[self.th,self.omega])
+        f = lambda t,y: [y[1],self.M*self.g*self.I/self.J*np.sin(y[0]) + self.u*self.Km/self.tau - 1/self.tau*y[1]]
+        sol = solve_ivp(f,[0,self.dt],[self.th,self.omega]) #integration
         self.th, self.omega = sol.y[:,-1]
         ##### End do not edit   #####
 
@@ -47,14 +61,16 @@ class UnbalancedDisk(gym.Env):
         
 
     def reset(self,seed=None):
-        self.th = np.random.normal(loc=0,scale=0.001)
+        self.th = np.random.normal(loc=np.pi,scale=0.001)
         self.omega = np.random.normal(loc=0,scale=0.001)
+        self.u = 0
         return self.get_obs()
 
     def get_obs(self):
-        th_noise = self.th + np.random.normal(loc=0,scale=0.001) #do not edit
-        omega_noise = self.omega + np.random.normal(loc=0,scale=0.001) #do not edit
-        return np.array([np.sin(th_noise), np.sin(omega_noise), omega_noise])
+        self.th_noise = self.th + np.random.normal(loc=0,scale=0.001) #do not edit
+        self.omega_noise = self.omega + np.random.normal(loc=0,scale=0.001) #do not edit
+
+        return np.array([np.sin(self.th_noise), np.cos(self.th_noise), self.omega_noise]) #change anything here
 
     def render(self, mode='human'):
         if self.viewer is None:
@@ -75,7 +91,7 @@ class UnbalancedDisk(gym.Env):
             self.img.add_attr(self.imgtrans)
 
         self.viewer.add_onetime(self.img)
-        self.pole_transform.set_rotation(self.th - np.pi / 2)
+        self.pole_transform.set_rotation(self.th + np.pi / 2)
         if self.u:
             self.imgtrans.scale = (-self.u / 2, np.abs(self.u) / 2)
 
